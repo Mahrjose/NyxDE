@@ -65,15 +65,17 @@ generateWallpaperHash() {
 
     # Verbose output for debugging purposes
     if [[ "${verboseMode}" -eq 1 ]]; then
-        echo "------------------// Hash Map //------------------"
+        echo "======> // Hash Map // <======"
         echo "Hash Algorithm  : ${hashAlgorithm}"
         echo "Image Directory : ${wallpaperDir}"
         echo "Images Processed: ${#wallpaperList[@]}"
         echo "--------------------------------------------------"
         for index in "${!wallpaperHash[@]}"; do
+            # Ex - :: ${wallpaperHash[0]}="26d8e09b1a6b0e4c474a7896dd0037ca0e3e50e6" :: ${wallpaperList[0]="/path/to/wallpaper.jpg"
             echo ":: \${wallpaperHash[$index]}=\"${wallpaperHash[$index]}\" :: \${wallpaperList[$index]}=\"${wallpaperList[$index]}\""
         done
         echo "--------------------------------------------------"
+        echo ""
     fi
 }
 
@@ -87,28 +89,33 @@ generateThemeList() {
     unset sortedThemeList      # Sorted array of theme names
     unset sortedWallpaperList  # Sorted array of wallpaper paths
 
-    # Loop through each theme directory
+    themeOrder=1 # Counter for theme order / serial
+
     while read -r themeDir; do
 
-        # Check if the symlink for wallpaper is missing or broken
+        # Check if the symlink for wallpaper is missing or broken & fix them
         if [ ! -e "$(readlink "${themeDir}/wallpaper.set")" ]; then
 
-            # Generate wallpaper hashes and possibly skip empty directories
-            generateWallpaperHash "${themeDir}" --skipstrays || continue
+            generateWallpaperHash --skipstrays "${themeDir}" ||
+                continue
 
             # Create or update the symlink to the current wallpaper
             echo "Fixing wallpaper symlink :: ${themeDir}/wallpaper.set -> ${wallpaperList[0]}"
             ln -fs "${wallpaperList[0]}" "${themeDir}/wallpaper.set"
         fi
 
-        # Read the theme order from a file if it exists
+        # Read the theme order from file
         if [ -f "${themeDir}/.themeOrder" ]; then
             themeOrderList+=("$(head -1 "${themeDir}/.themeOrder")")
         else
-            themeOrderList+=("0")
+            if echo $themeOrder >"${themeDir}/.themeOrder"; then
+                themeOrderList+=("${themeOrder}")
+                ((themeOrder++))
+            else
+                echo "Error: Unable to write to ${themeDir}/.themeOrder" >&2
+            fi
         fi
 
-        # Add theme name and wallpaper path to lists
         themeList+=("$(basename "${themeDir}")")
         wallpaperList+=("$(readlink "${themeDir}/wallpaper.set")")
 
@@ -123,9 +130,15 @@ generateThemeList() {
 
     # Verbose output for debugging purposes
     if [ "${1}" == "--verbose" ]; then
-        echo "// Theme Control //"
+        echo "======> // Theme Debug // <======"
+        echo "Theme Directory : ${nyxdeConfDir}/themes"
+        echo "Themes Processed: ${#sortedThemeList[@]}"
+        echo "--------------------------------------------------"
         for index in "${!sortedThemeList[@]}"; do
+            # Ex - :: ${sortedThemeOrderList[0]}="1" :: ${sortedThemeList[0]}="Theme Name" :: ${sortedWallpaperList[0]}="/path/to/wallpaper.jpg"
             echo -e ":: \${sortedThemeOrderList[${index}]}=\"${sortedThemeOrderList[index]}\" :: \${sortedThemeList[${index}]}=\"${sortedThemeList[index]}\" :: \${sortedWallpaperList[${index}]}=\"${sortedWallpaperList[index]}\""
         done
+        echo "--------------------------------------------------"
+        echo ""
     fi
 }
