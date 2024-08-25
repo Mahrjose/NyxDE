@@ -79,6 +79,11 @@ generateWallpaperHash() {
     fi
 }
 
+setWallpaperHash() {
+    local wallpaper="${1}"
+    "${hashAlgorithm}" "${wallpaper}" | awk '{print $1}'
+}
+
 generateThemeList() {
 
     unset themeOrderList # Array to store theme sort orders
@@ -141,4 +146,29 @@ generateThemeList() {
         echo "--------------------------------------------------"
         echo ""
     fi
+}
+
+isPackageInstalled() {
+
+    local packageName=$1
+
+    if pacman -Qi "${packageName}" &>/dev/null; then
+        return 0
+    fi
+
+    if pacman -Qi "flatpak" &>/dev/null && flatpak info "${packageName}" &>/dev/null; then
+        return 0
+    fi
+
+    # if snap list "${packageName}" &>/dev/null; then
+    #     return 0
+    # fi
+
+    # Checking if the command is available in the system's PATH
+    if command -v "${packageName}" &>/dev/null; then
+        return 0
+    fi
+
+    echo "Package '${packageName}' is not installed or not found." >&2
+    return 1
 }
