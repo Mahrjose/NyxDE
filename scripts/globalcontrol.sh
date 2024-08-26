@@ -172,3 +172,17 @@ isPackageInstalled() {
     echo "Package '${packageName}' is not installed or not found." >&2
     return 1
 }
+
+updateConfig() {
+    local configKey="${1}"
+    local configValue="${2}"
+
+    touch "${nyxdeConfDir}/nyxde.conf"
+
+    if [[ $(grep -c "^${configKey}=" "${nyxdeConfDir}/nyxde.conf") -eq 1 ]]; then
+        sed -i "/^${configKey}=/c${configKey}=\"${configValue}\"" "${nyxdeConfDir}/nyxde.conf"
+    else
+        echo "${configKey}=\"${configValue}\"" >>"${nyxdeConfDir}/nyxde.conf"    
+    fi
+}
+
