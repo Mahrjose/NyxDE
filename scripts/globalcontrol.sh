@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
 
-export confDir="${XDG_CONFIG_HOME:-$HOME/.config}"
-export nyxdeConfDir="${confDir}/NyxDE"
-
-export cacheDir="$HOME/.cache/NyxDE"
-export thumbDir="${cacheDir}/thumbs"
-export dynamicColorDir="${cacheDir}/dcolors"
-
-export hashAlgorithm="sha1sum"
-
 generateWallpaperHash() {
+
+    # This function processes a list of directories, generating hashes and paths
+    # for each image file found within the directories. The function supports
+    # verbose output and skipping directories with no images. Hashes and paths
+    # are stored in wallpaperHash and wallpaperList arrays, respectively.
+    #
+    # Parameters:
+    # - $@: List of directory paths to process.
+    # - --verbose: Enables verbose mode for additional output.
+    # - --skipstrays: Skips directories with no images.
+    #
+    # Returns:
+    # - 1 if no images are found and --skipstrays is enabled.
+    # - Exits with error if no images are found and --skipstrays is not enabled.
+    # - Otherwise, stores image hashes and paths in the corresponding arrays.
 
     unset wallpaperHash # Array to store hashes of wallpapers
     unset wallpaperList # Array to store file paths of wallpapers
@@ -71,7 +77,6 @@ generateWallpaperHash() {
         echo "Images Processed: ${#wallpaperList[@]}"
         echo "--------------------------------------------------"
         for index in "${!wallpaperHash[@]}"; do
-            # Ex - :: ${wallpaperHash[0]}="26d8e09b1a6b0e4c474a7896dd0037ca0e3e50e6" :: ${wallpaperList[0]="/path/to/wallpaper.jpg"
             echo ":: \${wallpaperHash[$index]}=\"${wallpaperHash[$index]}\" :: \${wallpaperList[$index]}=\"${wallpaperList[$index]}\""
         done
         echo "--------------------------------------------------"
@@ -80,11 +85,32 @@ generateWallpaperHash() {
 }
 
 setWallpaperHash() {
+
+    # This function calculates the hash of a given wallpaper file using the
+    # specified hash algorithm.
+    #
+    # Parameters:
+    # - $1: The file path of the wallpaper to hash.
+    #
+    # Returns:
+    # - The hash value of the wallpaper.
+
     local wallpaper="${1}"
     "${hashAlgorithm}" "${wallpaper}" | awk '{print $1}'
 }
 
 generateThemeList() {
+
+    # This function generates a list of themes, sorting them based on their
+    # order. It ensures that wallpaper symlinks are correct and collects
+    # theme names, orders, and corresponding wallpapers into arrays.
+    #
+    # Parameters:
+    # - $1: Optional --verbose flag to enable verbose output.
+    #
+    # Returns:
+    # - Populates sortedThemeOrderList, sortedThemeList, and sortedWallpaperList
+    #   with ordered themes and their wallpapers.
 
     unset themeOrderList # Array to store theme sort orders
     unset themeList      # Array to store theme names
@@ -140,7 +166,6 @@ generateThemeList() {
         echo "Themes Processed: ${#sortedThemeList[@]}"
         echo "--------------------------------------------------"
         for index in "${!sortedThemeList[@]}"; do
-            # Ex - :: ${sortedThemeOrderList[0]}="1" :: ${sortedThemeList[0]}="Theme Name" :: ${sortedWallpaperList[0]}="/path/to/wallpaper.jpg"
             echo -e ":: \${sortedThemeOrderList[${index}]}=\"${sortedThemeOrderList[index]}\" :: \${sortedThemeList[${index}]}=\"${sortedThemeList[index]}\" :: \${sortedWallpaperList[${index}]}=\"${sortedWallpaperList[index]}\""
         done
         echo "--------------------------------------------------"
@@ -149,6 +174,16 @@ generateThemeList() {
 }
 
 isPackageInstalled() {
+
+    # Checks if a given package is installed on the system, either through
+    # Pacman, Flatpak, or if the package's command is available in the PATH.
+    #
+    # Parameters:
+    # - $1: The name of the package to check.
+    #
+    # Returns:
+    # - 0 if the package is installed.
+    # - 1 if the package is not installed.
 
     local packageName=$1
 
@@ -160,10 +195,6 @@ isPackageInstalled() {
         return 0
     fi
 
-    # if snap list "${packageName}" &>/dev/null; then
-    #     return 0
-    # fi
-
     # Checking if the command is available in the system's PATH
     if command -v "${packageName}" &>/dev/null; then
         return 0
@@ -174,6 +205,18 @@ isPackageInstalled() {
 }
 
 updateConfig() {
+
+    # This function updates a key-value pair in the NyxDE configuration file.
+    # If the key exists, its value is updated; if not, the key-value pair is
+    # added to the configuration file.
+    #
+    # Parameters:
+    # - $1: The key to update or add.
+    # - $2: The value to associate with the key.
+    #
+    # Returns:
+    # - None
+
     local configKey="${1}"
     local configValue="${2}"
 
@@ -182,7 +225,47 @@ updateConfig() {
     if [[ $(grep -c "^${configKey}=" "${nyxdeConfDir}/nyxde.conf") -eq 1 ]]; then
         sed -i "/^${configKey}=/c${configKey}=\"${configValue}\"" "${nyxdeConfDir}/nyxde.conf"
     else
-        echo "${configKey}=\"${configValue}\"" >>"${nyxdeConfDir}/nyxde.conf"    
+        echo "${configKey}=\"${configValue}\"" >>"${nyxdeConfDir}/nyxde.conf"
     fi
 }
 
+main() {
+
+    export confDir="${XDG_CONFIG_HOME:-$HOME/.config}"
+    export nyxdeConfDir="${confDir}/NyxDE"
+
+    export cacheDir="$HOME/.cache/NyxDE"
+    export thumbDir="${cacheDir}/thumbs"
+    export dynamicColorDir="${cacheDir}/dcolors"
+
+    export hashAlgorithm="sha1sum"
+
+    if [ -f "${nyxdeConfDir}/hyde.conf" ]; then
+        source "${nyxdeConfDir}/nyxde.conf"
+    fi
+
+    case "${enableWallDColor}" in 0 | 1 | 2 | 3) ;;
+    *) enableWallDColor=0 ;;
+    esac
+
+    if [ -z "${nyxdeTheme}" ] || [ ! -d "${nyxdeConfDir}/themes/${nyxdeTheme}" ]; then
+        generateThemeList
+        nyxdeTheme=${sortedThemeList[0]}
+    fi
+
+    export nyxdeTheme
+    export nyxdeThemeDir="${nyxdeConfDir}/themes/${nyxdeTheme}"
+    export wallbashDir="${nyxdeConfDir}/wallbash"
+    export enableWallDColor
+
+    if printenv HYPRLAND_INSTANCE_SIGNATURE &>/dev/null; then
+        hypr_border="$(hyprctl -j getoption decoration:rounding | jq '.int')"
+        export hypr_border
+
+        hypr_width="$(hyprctl -j getoption general:border_size | jq '.int')"
+        export hypr_width
+    fi
+}
+
+# execute the script
+main
