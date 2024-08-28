@@ -173,6 +173,31 @@ generateThemeList() {
     fi
 }
 
+updateConfig() {
+
+    # This function updates a key-value pair in the NyxDE configuration file.
+    # If the key exists, its value is updated; if not, the key-value pair is
+    # added to the configuration file.
+    #
+    # Parameters:
+    # - $1: The key to update or add.
+    # - $2: The value to associate with the key.
+    #
+    # Returns:
+    # - None
+
+    local configKey="${1}"
+    local configValue="${2}"
+
+    touch "${nyxdeConfDir}/nyxde.conf"
+
+    if [[ $(grep -c "^${configKey}=" "${nyxdeConfDir}/nyxde.conf") -eq 1 ]]; then
+        sed -i "/^${configKey}=/c${configKey}=\"${configValue}\"" "${nyxdeConfDir}/nyxde.conf"
+    else
+        echo "${configKey}=\"${configValue}\"" >>"${nyxdeConfDir}/nyxde.conf"
+    fi
+}
+
 isPackageInstalled() {
 
     # Checks if a given package is installed on the system, either through
@@ -204,28 +229,23 @@ isPackageInstalled() {
     return 1
 }
 
-updateConfig() {
-
-    # This function updates a key-value pair in the NyxDE configuration file.
-    # If the key exists, its value is updated; if not, the key-value pair is
-    # added to the configuration file.
+findAurHelper() {
+    # Determines the installed AUR helper on the system and sets the variable accordingly.
     #
-    # Parameters:
-    # - $1: The key to update or add.
-    # - $2: The value to associate with the key.
+    # This function checks for the presence of common AUR helpers like `paru` and `yay`.
+    # If an AUR helper is found, the function sets the `aurHelper` variable to the helper's name.
     #
     # Returns:
-    # - None
+    # - 0 if an AUR helper is found and set to the `aurHelper` variable.
+    # - 1 if no AUR helper is found on the system, with an error message sent to stderr.
 
-    local configKey="${1}"
-    local configValue="${2}"
-
-    touch "${nyxdeConfDir}/nyxde.conf"
-
-    if [[ $(grep -c "^${configKey}=" "${nyxdeConfDir}/nyxde.conf") -eq 1 ]]; then
-        sed -i "/^${configKey}=/c${configKey}=\"${configValue}\"" "${nyxdeConfDir}/nyxde.conf"
+    if isPackageInstalled paru; then
+        aurHelper="paru"
+    elif isPackageInstalled yay; then
+        aurHelper="yay"
     else
-        echo "${configKey}=\"${configValue}\"" >>"${nyxdeConfDir}/nyxde.conf"
+        echo "Error: No aur helper found installed in the machine ... " >&2
+        return 1
     fi
 }
 
