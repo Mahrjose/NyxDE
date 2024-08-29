@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 getLocation() {
 
@@ -47,9 +47,14 @@ getLocation() {
     url+="&limit=5&appid=${APIKEY}"
 
     # Fetch and process the response
-    local response=$(curl -s -w "%{http_code}" "${url}")
-    local httpStatusCode="${response: -3}"
-    local responseBody="${response%???}"
+    local response
+    local httpStatusCode
+    local responseBody
+    local location
+
+    response=$(curl -s -w "%{http_code}" "${url}")
+    httpStatusCode="${response: -3}"
+    responseBody="${response%???}"
 
     if [[ $httpStatusCode -ne 200 ]]; then
         echo "Error: Failed to fetch location (HTTP status code $httpStatusCode)" >&2
@@ -61,11 +66,56 @@ getLocation() {
 }
 
 dailyWeather() {
-    pass
+
+    # dailyWeather: Fetches daily weather information for a given city.
+    # Arguments:
+    #   --city: Name of the city (required)
+    #   --state: Name of the state (optional)
+    #   --country: Name of the country (optional)
+    # Returns:
+    #   JSON containing various information related to weather forecast for 'today'
+
+    local locationInfo
+    local latitude
+    local longitude
+
+    locationInfo="$(getLocation "$@")"
+    latitude="$(jq '.lat' <<<"${locationInfo}")"
+    longitude="$(jq '.lon' <<<"${locationInfo}")"
+
+    local url
+    local response
+
+    url="https://api.openweathermap.org/data/2.5/weather?lat={$latitude}&lon={$longitude}&units=metric&appid={$APIKEY}"
+    response=$(curl -s "${url}" | jq .)
+    echo "$response"
 }
 
 weatherForecast() {
-    pass
+
+    #!!! TODO: Find a free forecast API. Openweather API don't support this in free plan.
+
+    local locationInfo
+    local latitude
+    local longitude
+
+    locationInfo="$(getLocation "$@")"
+    latitude="$(jq '.lat' <<<"${locationInfo}")"
+    longitude="$(jq '.lon' <<<"${locationInfo}")"
+
+    local hourlyForecastURL
+    local dailyForecastURL
+    local response
+
+    # Days in future to get update
+    local days=4
+
+    dailyForecastURL="api.openweathermap.org/data/2.5/forecast/daily?lat={$latitude}&lon={$longitude}&cnt={$days}&appid={$APIKEY}"
+    hourlyForecastURL="https://pro.openweathermap.org/data/2.5/forecast/hourly?lat={$latitude}&lon={$longitude}&appid={$APIKEY}&lang={en}"
+}
+
+formatDate() {
+    
 }
 
 main() {
@@ -77,7 +127,9 @@ main() {
         return 1
     fi
 
-    getLocation "$@"
+    # dailyWeather "$@"
+    weatherForecast "$@"
+
 }
 
 main "$@"
