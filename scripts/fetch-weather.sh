@@ -1,67 +1,83 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-# Fetches the weather information and processes the data.
-#
-# Parameters:
-# - $1: The location query (e.g., "New+York").
-#
-# Returns:
-# - Outputs a JSON string with weather text and tooltip information.
-# - Returns 0 on success, 1 on failure.
+getLocation() {
 
-getWeather() {
-    local location="$1"
+    # getLocation: Fetches the latitude and longitude for a given city.
+    # Arguments:
+    #   --city: Name of the city (required)
+    #   --state: Name of the state (optional)
+    #   --country: Name of the country (optional)
+    # Returns:
+    #   JSON containing the name, lat, lon, state, and country of the city.
 
-    # Fetch the simple weather text
-    local weatherText
-    weatherText=$(curl -s "https://wttr.in/$location?format=1")
+    local city=""
+    local state=""
+    local country=""
 
-    if [[ $? -ne 0 ]]; then
-        return 1
-    fi
-
-    # Clean up the weather text by removing extra spaces and the '+' sign
-    weatherText=$(echo "$weatherText" | sed -E "s/\s+/ /g" | sed 's/+//')
-
-    # Fetch the detailed weather tooltip
-    local weatherTooltip
-    weatherTooltip=$(curl -s "https://wttr.in/$location?format=4")
-
-    if [[ $? -ne 0 ]]; then
-        return 1
-    fi
-
-    # Clean up the tooltip, remove the second '+' sign, and format the location
-    weatherTooltip=$(echo "$weatherTooltip" | sed -E "s/\s+/ /g" | sed 's/+//2')
-    local formattedLocation
-    formattedLocation=$(echo "$location" | sed 's/\+/, /g')
-    weatherTooltip=$(echo "$weatherTooltip" | sed "s/$location/$formattedLocation/")
-
-    # Output the JSON with weather text and tooltip
-    echo "{\"text\":\"$weatherText\", \"tooltip\":\"$weatherTooltip\"}"
-    return 0
-}
-
-# Main function to orchestrate the script's logic
-main() {
-    local location="$1"
-
-    # Try fetching the weather information up to 5 times
-    for i in {1..5}; do
-        getWeather "$location" && exit 0
-        sleep 2
+    local args=("$@")
+    while [[ ${#args[@]} -gt 0 ]]; do
+        case "${args[0]}" in
+        --city)
+            city="${args[1]}"
+            ;;
+        --state)
+            state="${args[1]}"
+            ;;
+        --country)
+            country="${args[1]}"
+            ;;
+        *)
+            echo "Unknown option \"${args[0]}\"" >&2
+            return 1
+            ;;
+        esac
+        args=("${args[@]:2}")
     done
 
-    # If all attempts fail, return an error message
-    echo "{\"text\":\" N/A\", \"tooltip\":\"N/A\"}"
-    exit 1
+    # Validate required parameters
+    if [ -z "$city" ]; then
+        echo "Error: The city parameter is required but missing or empty." >&2
+        return 1
+    fi
+
+    # Build URL based on available parameters
+    local url="http://api.openweathermap.org/geo/1.0/direct?q=${city}"
+    [[ -n "$state" ]] && url+=",${state}"
+    [[ -n "$country" ]] && url+=",${country}"
+    url+="&limit=5&appid=${APIKEY}"
+
+    # Fetch and process the response
+    local response=$(curl -s -w "%{http_code}" "${url}")
+    local httpStatusCode="${response: -3}"
+    local responseBody="${response%???}"
+
+    if [[ $httpStatusCode -ne 200 ]]; then
+        echo "Error: Failed to fetch location (HTTP status code $httpStatusCode)" >&2
+        return 1
+    fi
+
+    location=$(jq '.[0] | { name: .name, lat: .lat, lon: .lon, state: .state, country: .country }' <<<"${responseBody}")
+    echo "$location"
 }
 
-# Check if location is provided as a parameter
-if [[ -z "$1" ]]; then
-    echo "Error: Location not provided." >&2
-    exit 1
-fi
+dailyWeather() {
+    pass
+}
 
-# Call the main function with the provided location
-main "$1"
+weatherForecast() {
+    pass
+}
+
+main() {
+    # Load APIKEY from `.env` file
+    if [ -f ../.env ]; then
+        export $(cat ../.env | xargs)
+    else
+        echo "Error: .env file not found or APIKEY not set." >&2
+        return 1
+    fi
+
+    getLocation "$@"
+}
+
+main "$@"
