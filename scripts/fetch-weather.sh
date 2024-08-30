@@ -50,6 +50,8 @@ formatData() {
     local icon=$(getWeatherIcon "$iconCode")
     local text="$icon ${temperature}°C"
 
+    # -------------------------------Text Format-------------------------------
+
     local toolTip="\
 \n\
 📍 Location: $location\n\
@@ -70,6 +72,7 @@ formatData() {
 \n\
 📈 Note: It might rain tomorrow, carry an umbrella! ☂️  \n\
 "
+    # -------------------------------------------------------------------------
 
     echo "{\"text\":\"$text\", \"tooltip\":\"$toolTip\"}"
 }
