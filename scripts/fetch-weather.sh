@@ -1,49 +1,71 @@
 #!/usr/bin/env bash
 
+getWeatherIcon() {
+    local iconCode="$1"
+
+    case "$iconCode" in
+    "01d") echo "☀️" ;;         # clear sky (day)
+    "01n") echo "🌑" ;;          # clear sky (night)
+    "02d") echo "🌤️" ;;         # few clouds (day)
+    "02n") echo "🌥️" ;;         # few clouds (night)
+    "03d" | "03n") echo "☁️" ;; # scattered clouds
+    "04d" | "04n") echo "🌥️" ;; # broken clouds
+    "09d" | "09n") echo "🌦️" ;; # shower rain
+    "10d" | "10n") echo "🌧️" ;; # rain
+    "11d" | "11n") echo "⛈️" ;; # thunderstorm
+    "13d" | "13n") echo "❄️" ;; # snow
+    "50d" | "50n") echo "🌫️" ;; # mist
+    *) echo "❓" ;;              # unknown weather condition
+    esac
+}
+
 formatData() {
     local json="$1"
 
+    # Extract data from JSON
     local location=$(jq -r '.name + ", " + .sys.country' <<<"$json")
     local temperature=$(jq -r '.main.temp' <<<"$json")
     local feelsLike=$(jq -r '.main.feels_like' <<<"$json")
     local tempMin=$(jq -r '.main.temp_min' <<<"$json")
     local tempMax=$(jq -r '.main.temp_max' <<<"$json")
     local weatherDescription=$(jq -r '.weather[0].description' <<<"$json")
+
     local humidity=$(jq -r '.main.humidity' <<<"$json")
     local windSpeed=$(jq -r '.wind.speed' <<<"$json")
     local windDeg=$(jq -r '.wind.deg' <<<"$json")
     local windGusts=$(jq -r '.wind.gust // 0' <<<"$json")
+
     local pressure=$(jq -r '.main.pressure' <<<"$json")
-    local seaLevelPressure=$(jq -r '.main.sea_level // 0' <<<"$json")
-    local groundLevelPressure=$(jq -r '.main.grnd_level // 0' <<<"$json")
     local cloudCover=$(jq -r '.clouds.all' <<<"$json")
-    local visibility=$(jq -r '.visibility' <<<"$json")
+    local visibility=$(($(jq -r '.visibility' <<<"$json") / 1000)) # meters to km
+
     local sunrise=$(jq -r '.sys.sunrise' <<<"$json")
     local sunset=$(jq -r '.sys.sunset' <<<"$json")
 
-    # Convert visibility from meters to kilometers
-    local visibility_km=$((visibility / 1000))
+    local iconCode=$(jq -r '.weather[0].icon' <<<"$json")
+    local icon=$(getWeatherIcon "$iconCode")
+    local text="$icon ${temperature}°C"
 
-    echo "📍 Location: $location"
-    echo "   (City in the northeastern ${location##*,})"
-    echo ""
-    echo "🌡️ Current Weather: ${temperature}°C | ${weatherDescription}"
-    echo "   🔥 Feels Like: ${feelsLike}°C"
-    echo "   🔼 High: ${tempMax}°C, 🔽 Low: ${tempMin}°C"
-    echo ""
-    echo "📊 Additional Details:"
-    echo "   💧 Humidity: ${humidity}%"
-    echo "   🌬️ Wind: ${windSpeed} km/h (From ${windDeg}°)"
-    echo "   🌪️ Wind Gusts: ${windGusts} km/h"
-    echo "   👀 Visibility: ${visibility_km} km"
-    echo "   ☁️ Cloud Cover: ${cloudCover}%"
-    echo "   📊 Pressure: ${pressure} hPa"
-    [[ $seaLevelPressure -gt 0 ]] && echo "   🌊 Sea Level Pressure: ${seaLevelPressure} hPa"
-    [[ $groundLevelPressure -gt 0 ]] && echo "   🏔️ Ground Level Pressure: ${groundLevelPressure} hPa"
-    echo ""
-    echo "🌅 Sunrise: $(date -d @$sunrise +'%I:%M %p') 🌄 | Sunset: $(date -d @$sunset +'%I:%M %p') 🌃"
-    echo ""
-    echo "📈 Note: It might rain tomorrow, carry an umbrella! ☂️"
+    local toolTip=""
+    toolTip+=$'📍 Location: '"$location"$'\n'
+    toolTip+=$'🌡️ Current Weather: '"${temperature}°C | ${weatherDescription^}"$'\n'
+    toolTip+=$'    🔥 Feels Like: '"${feelsLike}°C"$'\n'
+    toolTip+=$'    🔼 High: '"${tempMax}°C, 🔽 Low: ${tempMin}°C"$'\n'
+    toolTip+=$'\n'
+    toolTip+=$'📊 Additional Details:\n'
+    toolTip+=$'    💧 Humidity: '"${humidity}%"$'\n'
+    toolTip+=$'    🌬️ Wind: '"${windSpeed} km/h (From ${windDeg}°)"$'\n'
+    toolTip+=$'    🌪️ Wind Gusts: '"${windGusts} km/h"$'\n'
+    toolTip+=$'    👀 Visibility: '"${visibility} km"$'\n'
+    toolTip+=$'    ☁️ Cloud Cover: '"${cloudCover}%"$'\n'
+    toolTip+=$'    📊 Pressure: '"${pressure} hPa"$'\n'
+    toolTip+=$'\n'
+    toolTip+=$'🌅 Sunrise: '$(date -d @$sunrise +'%I:%M %p')$' 🌄 | Sunset: '$(date -d @$sunset +'%I:%M %p')$' 🌃\n'
+    toolTip+=$'\n'
+    toolTip+=$'📈 Note: It might rain tomorrow, carry an umbrella! ☂️'
+
+    echo "{\"text\":\"$text\", \"tooltip\":\"$toolTip\"}"
+    # echo "$toolTip"
 }
 
 getLocation() {
