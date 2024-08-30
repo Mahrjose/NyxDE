@@ -19,15 +19,19 @@ getWeatherIcon() {
     esac
 }
 
+generateDynamicMessage() {
+    pass
+}
+
 formatData() {
     local json="$1"
 
     # Extract data from JSON
     local location=$(jq -r '.name + ", " + .sys.country' <<<"$json")
-    local temperature=$(jq -r '.main.temp' <<<"$json")
-    local feelsLike=$(jq -r '.main.feels_like' <<<"$json")
-    local tempMin=$(jq -r '.main.temp_min' <<<"$json")
-    local tempMax=$(jq -r '.main.temp_max' <<<"$json")
+    local temperature=$(printf "%.1f" "$(jq -r '.main.temp' <<<"$json")")
+    local feelsLike=$(printf "%.1f" "$(jq -r '.main.feels_like' <<<"$json")")
+    local tempMin=$(printf "%.1f" "$(jq -r '.main.temp_min' <<<"$json")")
+    local tempMax=$(printf "%.1f" "$(jq -r '.main.temp_max' <<<"$json")")
     local weatherDescription=$(jq -r '.weather[0].description' <<<"$json")
 
     local humidity=$(jq -r '.main.humidity' <<<"$json")
@@ -46,26 +50,28 @@ formatData() {
     local icon=$(getWeatherIcon "$iconCode")
     local text="$icon ${temperature}°C"
 
-    local toolTip=""
-    toolTip+=$'📍 Location: '"$location"$'\n'
-    toolTip+=$'🌡️ Current Weather: '"${temperature}°C | ${weatherDescription^}"$'\n'
-    toolTip+=$'    🔥 Feels Like: '"${feelsLike}°C"$'\n'
-    toolTip+=$'    🔼 High: '"${tempMax}°C, 🔽 Low: ${tempMin}°C"$'\n'
-    toolTip+=$'\n'
-    toolTip+=$'📊 Additional Details:\n'
-    toolTip+=$'    💧 Humidity: '"${humidity}%"$'\n'
-    toolTip+=$'    🌬️ Wind: '"${windSpeed} km/h (From ${windDeg}°)"$'\n'
-    toolTip+=$'    🌪️ Wind Gusts: '"${windGusts} km/h"$'\n'
-    toolTip+=$'    👀 Visibility: '"${visibility} km"$'\n'
-    toolTip+=$'    ☁️ Cloud Cover: '"${cloudCover}%"$'\n'
-    toolTip+=$'    📊 Pressure: '"${pressure} hPa"$'\n'
-    toolTip+=$'\n'
-    toolTip+=$'🌅 Sunrise: '$(date -d @$sunrise +'%I:%M %p')$' 🌄 | Sunset: '$(date -d @$sunset +'%I:%M %p')$' 🌃\n'
-    toolTip+=$'\n'
-    toolTip+=$'📈 Note: It might rain tomorrow, carry an umbrella! ☂️'
+    local toolTip="\
+\n\
+📍 Location: $location\n\
+\n\
+🌡️ Current Weather: ${temperature}°C | ${weatherDescription^}\n\
+    🔥 Feels Like: ${feelsLike}°C\n\
+    🔼 High: ${tempMax}°C, 🔽 Low: ${tempMin}°C\n\
+\n\
+📊 Additional Details:          \n\
+    💧 Humidity: ${humidity}%   \n\
+    🌬️ Wind: ${windSpeed} km/h (From ${windDeg}°)   \n\
+    🌪️ Wind Gusts: ${windGusts} km/h    \n\
+    👀 Visibility: ${visibility} km     \n\
+    ☁️ Cloud Cover: ${cloudCover}%      \n\
+    📊 Pressure: ${pressure} hPa        \n\
+\n\
+🌅 Sunrise: $(date -d @$sunrise +'%I:%M %p') 🌄 | Sunset: $(date -d @$sunset +'%I:%M %p') 🌃    \n\
+\n\
+📈 Note: It might rain tomorrow, carry an umbrella! ☂️  \n\
+"
 
     echo "{\"text\":\"$text\", \"tooltip\":\"$toolTip\"}"
-    # echo "$toolTip"
 }
 
 getLocation() {
@@ -133,6 +139,10 @@ getLocation() {
     echo "$location"
 }
 
+getDisasterAlert() {
+    pass
+}
+
 dailyWeather() {
 
     # dailyWeather: Fetches daily weather information for a given city.
@@ -192,7 +202,7 @@ main() {
     fi
 
     dailyWeather "$@"
-    # weatherForecast "$@"
+    # echo "{\"text\":\"☀️ 28°C\", \"tooltip\":\"Sunny with clear skies\"}"
 
 }
 
