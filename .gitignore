@@ -1,0 +1,9 @@
+test/
+NyxDE/
+.vscode/
+test.sh
+commands.md
+.env
+temp/
+temp/*
+.venv
