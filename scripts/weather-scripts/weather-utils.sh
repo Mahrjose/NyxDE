@@ -37,7 +37,7 @@ getCountryName() {
     local countryName
     local countryCode="$1"
 
-    countryName=$(jq -r --arg code "$countryCode" '.[] | select(.code == $code) | .name' ../utils/country-info.json)
+    countryName=$(jq -r --arg code "$countryCode" '.[] | select(.code == $code) | .name' ../../utils/country-info.json)
 
     echo "$countryName"
 }
@@ -53,7 +53,7 @@ getFlagEmoji() {
     local flag
     local countryCode="$1"
 
-    flag=$(jq -r --arg code "$countryCode" '.[] | select(.code == $code) | .flag' ../utils/country-info.json)
+    flag=$(jq -r --arg code "$countryCode" '.[] | select(.code == $code) | .flag' ../../utils/country-info.json)
 
     echo "$flag"
 }

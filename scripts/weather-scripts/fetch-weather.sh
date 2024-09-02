@@ -1,198 +1,99 @@
 #!/usr/bin/env bash
 
-formatData() {
+getWeather() {
 
-    # formatData: Formats and prepares weather information for display.
-    # Extracts and formats details such as location, temperature, wind, and more.
+    # getWeather: Fetches weather data based on location information.
+    # Determines whether to use city or coordinates for location,
+    # builds the API request URL, and formats the weather data.
     # Arguments:
-    #   json         : JSON data containing weather details (required)
-    #   locationInfo : JSON data containing location information (required)
+    #   Either a set of location parameters (--city, --state, --country)
+    #   or coordinates (--lat, --lon).
     # Returns:
-    #   JSON string with formatted weather text and tooltip for display.
-
-    local locationInfo="$2" # Json data, includes city, lat, lon, country, state
-    local json="$1"         # Json data, includes various weather info
-
-    # --------------------------------------------------------------------- #
-    # Extract and format location data (latitude, longitude, city, country) #
-    # ----------------------------------------------------------------------#
-
-    local lat
-    local lon
-    lat=$(printf "%.3f" "$(jq -r '.lat' <<<"$locationInfo")")
-    lon=$(printf "%.3f" "$(jq -r '.lon' <<<"$locationInfo")")
-
-    local city
-    local country
-    local flag
-    city=$(jq -r '.name' <<<"$locationInfo")
-    country=$(getCountryName "$(jq -r '.sys.country' <<<"$json")")
-    flag=$(getFlagEmoji "$(jq -r '.sys.country' <<<"$json")")
-
-    # ----------------------------------------------------------------------#
-    #         Extract and format temperature and weather description        #
-    # ----------------------------------------------------------------------#
-
-    local temperature
-    local feelsLike
-    local tempMin
-    local tempMax
-    local weatherDescription
-    temperature=$(printf "%.1f" "$(jq -r '.main.temp' <<<"$json")")
-    feelsLike=$(printf "%.1f" "$(jq -r '.main.feels_like' <<<"$json")")
-    tempMin=$(printf "%.1f" "$(jq -r '.main.temp_min' <<<"$json")")
-    tempMax=$(printf "%.1f" "$(jq -r '.main.temp_max' <<<"$json")")
-    weatherDescription=$(jq -r '.weather[0].description' <<<"$json")
-
-    # ----------------------------------------------------------------------#
-    #  Extract and format wind data (speed, direction, gusts) and humidity  #
-    # ----------------------------------------------------------------------#
-
-    local humidity
-    local windSpeed
-    local windDirection
-    local windGusts
-    humidity=$(jq -r '.main.humidity' <<<"$json")
-    windSpeed=$(jq -r '.wind.speed' <<<"$json")
-    windDirection=$(getDirectionEmoji "$(jq -r '.wind.deg' <<<"$json")")
-    windGusts=$(jq -r '.wind.gust // 0' <<<"$json")
-
-    # ----------------------------------------------------------------------------------#
-    # Extract and format additional weather details (pressure, cloud cover, visibility) #
-    # ----------------------------------------------------------------------------------#
-
-    local pressure
-    local cloudCover
-    local visibility
-    pressure=$(jq -r '.main.pressure' <<<"$json")
-    cloudCover=$(jq -r '.clouds.all' <<<"$json")
-    visibility=$(($(jq -r '.visibility' <<<"$json") / 1000)) # Convert meters to km
-
-    # ----------------------------------------------------------------------#
-    #             Extract and format sunrise and sunset times               #
-    # ----------------------------------------------------------------------#
-
-    local sunrise
-    local sunset
-    sunrise=$(jq -r '.sys.sunrise' <<<"$json")
-    sunset=$(jq -r '.sys.sunset' <<<"$json")
-
-    # ----------------------------------------------------------------------#
-    #     Determine appropriate weather icon and construct display text     #
-    # ----------------------------------------------------------------------#
-
-    local icon
-    local text
-    local iconCode
-    iconCode=$(jq -r '.weather[0].icon' <<<"$json")
-    icon=$(getWeatherIcon "$iconCode")
-    text="$icon ${temperature}°C"
-
-    # ----------------------------------------------------------------------#
-    #        Generate a dynamic message based on weather conditions         #
-    # ----------------------------------------------------------------------#
-
-    local weatherID
-    local message
-    weatherID=$(jq -r '.weather[0].id' <<<"$json")
-    message=$(generateDynamicMessage "$temperature" "$feelsLike" "$weatherID")
-
-    # ----------------------------------------------------------------------#
-    #              Construct tooltip with all formatted data                #
-    # ----------------------------------------------------------------------#
-
-    local toolTip
-    toolTip="\
-    \n\
-    📍 Location: ${city}, $country $flag (${lat}, $lon)\n\
-    \n\
-    🌡️ Current Weather: ${temperature}°C | ${weatherDescription^}\n\
-        🔥 Feels Like: ${feelsLike}°C\n\
-        🔼 High: ${tempMax}°C, 🔽 Low: ${tempMin}°C\n\
-    \n\
-    📊 Additional Details:          \n\
-        💧 Humidity   : ${humidity}%   \n\
-        🌬️ Wind       : ${windSpeed} km/h | Direction ${windDirection}   \n\
-        🌪️ Wind Gusts : ${windGusts} km/h    \n\
-        ☁️ Cloud      : ${cloudCover}%      \n\
-        👀 Visibility : ${visibility} km     \n\
-        📊 Pressure   : ${pressure} hPa        \n\
-    \n\
-    🌅 Sunrise: $(date -d @$sunrise +'%I:%M %p') 🌄 | Sunset: $(date -d @$sunset +'%I:%M %p') 🌃    \n\
-    \n\
-    $message \n\
-    "
-
-    # Return the final JSON string with formatted text and tooltip
-    echo "{\"text\":\"$text\", \"tooltip\":\"$toolTip\"}"
-}
-
-weatherForecast() {
-
-    #!!! TODO: Find a free forecast API. Openweather API don't support this in free plan.
-    pass
-}
-
-dailyWeather() {
-
-    # dailyWeather: Fetches daily weather information for a given city.
-    # Arguments:
-    #   --city    : Name of the city    (required)
-    #   --state   : Name of the state   (optional)
-    #   --country : Name of the country (optional)
-    # Returns:
-    #   JSON containing various information related to weather forecast for 'today'
+    #   None
 
     local locationInfo
     local latitude
     local longitude
 
-    locationInfo="$(getLocation "$@")"
-    latitude="$(jq '.lat' <<<"${locationInfo}")"
-    longitude="$(jq '.lon' <<<"${locationInfo}")"
+    if [ "$1" == "--city" ]; then
+        locationInfo="$(getLocation --by-city "$@")"
+    else
+        locationInfo="$(getLocation --by-coordinates "$@")"
+    fi
+
+    latitude="$(jq -r '.lat' <<<"${locationInfo}")"
+    longitude="$(jq -r '.lon' <<<"${locationInfo}")"
 
     local url
     local response
 
-    url="https://api.openweathermap.org/data/2.5/weather?lat={$latitude}&lon={$longitude}&units=metric&appid={$APIKEY}"
+    url="https://api.openweathermap.org/data/2.5/weather?lat={$latitude}&lon={$longitude}&units=metric&appid={$OPENWEATHER_APIKEY}"
     response=$(curl -s "${url}" | jq .)
     formatData "$response" "$locationInfo"
+
 }
 
-main() {
+getWeatherByCoordinates() {
 
-    # main: Entry point of the script to fetch weather information.
-    # Loads the API key, sets default values, and calls weather functions.
+    # getWeatherByCoordinates: Parses command-line arguments for latitude and longitude
+    # and fetches weather data for the specified coordinates.
     # Arguments:
-    #   --city    : Name of the city    (optional, defaults to Dhaka if not provided)
-    #   --state   : Name of the state   (optional)
-    #   --country : Name of the country (optional, defaults to Bangladesh if not provided)
+    #   --lat     : Latitude coordinate (optional, defaults to 23.543)
+    #   --lon     : Longitude coordinate (optional, defaults to 89.626)
     # Returns:
     #   None
 
-    # Load APIKEY from `.env` file
-    if [ -f ../.env ]; then
-        export $(cat ../.env | xargs)
-    else
-        echo "Error: .env file not found or APIKEY not set." >&2
-        return 1
+    local latitude=""
+    local longitude=""
+
+    while [[ $# -gt 0 ]]; do
+
+        case "$1" in
+        --lat)
+            [ -z "${latitude}" ] && latitude="$2"
+            shift 2
+            ;;
+        --lon)
+            [ -z "${longitude}" ] && longitude="$2"
+            shift 2
+            ;;
+        --city | --state | --country)
+            echo "Please use either location parameters (--city, --state, --country) or coordinate parameters (--lat, --lon), but not both." >&2
+            exit 1
+            ;;
+        *)
+            echo "Unknown option \"$1\"" >&2
+            exit 1
+            ;;
+        esac
+    done
+
+    if [ -z "$latitude" ] || [ -z "$longitude" ]; then
+        echo "Warning: either --lat or --lon missing. Defaulting to --lat 23.543 --lon 89.626 (Madhukhali)" >&2
+        latitude="23.543"
+        longitude="89.626" # Madhukhali Corodinates
     fi
 
-    # Includes -> generateDynamicMessage()
-    source ./weather-scripts/generate-weather-messages.sh
+    getWeather --lat "$latitude" --lon "$longitude"
+}
 
-    # Includes -> getLocation()
-    source ./weather-scripts/get-location.sh
+getWeatherByCity() {
 
-    # Includes -> getFlagEmoji(), getCountryName(), getWeatherIcon(), getDirectionEmoji()
-    source ./weather-scripts/weather-utils.sh
+    # getWeatherByCity: Parses command-line arguments for city, state, and country
+    # and fetches weather data for the specified city.
+    # Arguments:
+    #   --city    : Name of the city (required, defaults to Dhaka if not provided)
+    #   --state   : Name of the state (optional)
+    #   --country : Name of the country (optional, defaults to Bangladesh if not provided)
+    # Returns:
+    #   None
 
     local city=""
     local state=""
     local country=""
 
-    # Parse command-line arguments
     while [[ $# -gt 0 ]]; do
+
         case "$1" in
         --city)
             city="$2"
@@ -206,6 +107,11 @@ main() {
             country="$2"
             shift 2
             ;;
+        --lon | --lat)
+            echo "Please use either location parameters (--city, --state, --country) or coordinate parameters (--lat, --lon), but not both." >&2
+            exit 1
+            ;;
+
         *)
             echo "Unknown option \"$1\"" >&2
             exit 1
@@ -221,7 +127,68 @@ main() {
     fi
 
     # Call the function to fetch daily weather with the resolved arguments
-    dailyWeather --city "$city" --state "$state" --country "$country"
+    getWeather --city "$city" --state "$state" --country "$country"
+
+}
+
+main() {
+
+    # main: Entry point of the script to fetch weather information.
+    # Loads the API key, sets default values, parses arguments, and fetches weather data.
+    # Arguments (mutually exclusive groups):
+    #   Group 1: Location by city
+    #     --city    : Name of the city    (required, defaults to Dhaka if not provided)
+    #     --state   : Name of the state   (optional)
+    #     --country : Name of the country (optional, defaults to Bangladesh if not provided)
+    #
+    #   Group 2: Location by coordinates
+    #     --lat     : Latitude coordinate  (required, defaults to 23.543 if not provided)
+    #     --lon     : Longitude coordinate (required, defaults to 89.626 if not provided)
+    #
+    # Note: Only one group of arguments can be used at a time.
+    # Returns:
+    #   None
+
+    local ENV_FILE="../../.env"
+
+    # Load APIKEY from `.env` file
+    if [ -f $ENV_FILE ]; then
+        source ../../.env
+    else
+        echo "Error: .env file not found or APIKEY not set." >&2
+        return 1
+    fi
+
+    # Includes -> generateDynamicMessage()
+    source generate-weather-messages.sh
+
+    # Includes -> getLocation()
+    source get-location.sh
+
+    # Includes -> getFlagEmoji(), getCountryName(), getWeatherIcon(), getDirectionEmoji()
+    source weather-utils.sh
+
+    # Includes -> formatInfo()
+    source format-data.sh
+
+    local city=""
+    local state=""
+    local country=""
+
+    local latitude=""
+    local longitude=""
+
+    # Parse command-line arguments
+    if [ "$1" == "--lat" ] || [ "$1" == "--lon" ]; then
+        getWeatherByCoordinates "$@"
+
+    elif [ "$1" == "--city" ] || [ "$1" == "--state" ] || [ "$1" == "--country" ]; then
+        getWeatherByCity "$@"
+
+    else
+        echo "Warning: No arguments provided. Defaulting to --city Madhukhali --country Bangladesh" >&2
+        getWeatherByCity --city "Madhukhali" --country "Bangladesh"
+    fi
 }
 
 main "$@"

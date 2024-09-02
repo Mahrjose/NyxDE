@@ -2,49 +2,65 @@
 
 getLocation() {
 
-    # getLocation: Fetches the latitude and longitude for a given city.
+    # getLocation: Fetches location data based on city/state/country or coordinates.
     # Arguments:
-    #   --city    : Name of the city    (required)
-    #   --state   : Name of the state   (optional)
-    #   --country : Name of the country (optional)
+    #   --by-city     : Use city/state/country to get location data
+    #     --city      : Name of the city
+    #     --state     : Name of the state (optional)
+    #     --country   : Name of the country (optional)
+    #   --by-coordinates : Use latitude/longitude to get location data
+    #     --lat       : Latitude coordinate
+    #     --lon       : Longitude coordinate
     # Returns:
-    #   JSON containing the name, lat, lon, state, and country of the city.
+    #   JSON object containing location data including name, latitude, longitude, state, and country.
 
-    local city=""
-    local state=""
-    local country=""
+    if [ "$1" == "--by-city" ]; then
 
-    local args=("$@")
-    while [[ ${#args[@]} -gt 0 ]]; do
-        case "${args[0]}" in
-        --city)
-            city="${args[1]}"
-            ;;
-        --state)
-            state="${args[1]}"
-            ;;
-        --country)
-            country="${args[1]}"
-            ;;
-        *)
-            echo "Unknown option \"${args[0]}\"" >&2
-            return 1
-            ;;
-        esac
-        args=("${args[@]:2}")
-    done
+        local city=""
+        local state=""
+        local country=""
 
-    # Validate required parameters
-    if [ -z "$city" ]; then
-        echo "Error: The city parameter is required but missing or empty." >&2
+        shift 1
+
+        while [[ $# -gt 0 ]]; do
+            case $1 in
+            --city)
+                city=$2
+                shift 2
+                ;;
+            --state)
+                state=$2
+                shift 2
+                ;;
+            --country)
+                country=$2
+                shift 2
+                ;;
+            esac
+        done
+
+        # Build URL based on available parameters
+        local url="http://api.openweathermap.org/geo/1.0/direct?q=${city}"
+        [[ -n "$state" ]] && url+=",${state}"
+        [[ -n "$country" ]] && url+=",${country}"
+        url+="&limit=5&appid=${OPENWEATHER_APIKEY}"
+
+    elif [ "$1" == "--by-coordinates" ]; then
+
+        shift 1
+
+        local latitude="$2"
+        local longitude="$4"
+
+        local url
+        local limit=5
+
+        url="http://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=${limit}&appid=${OPENWEATHER_APIKEY}"
+
+    else
+        echo "Error: wrong argument, use either --by-city or --by-coordinate as first argument (\$1)" >&2
         return 1
     fi
-
-    # Build URL based on available parameters
-    local url="http://api.openweathermap.org/geo/1.0/direct?q=${city}"
-    [[ -n "$state" ]] && url+=",${state}"
-    [[ -n "$country" ]] && url+=",${country}"
-    url+="&limit=5&appid=${APIKEY}"
 
     # Fetch and process the response
     local response
@@ -57,7 +73,7 @@ getLocation() {
     responseBody="${response%???}"
 
     if [[ $httpStatusCode -ne 200 ]]; then
-        echo "Error: Failed to fetch location (HTTP status code $httpStatusCode)" >&2
+        echo "./get-location.sh -> Error: Failed to fetch location (HTTP status code $httpStatusCode)" >&2
         return 1
     fi
 
