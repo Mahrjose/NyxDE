@@ -73,7 +73,7 @@ getLocation() {
     responseBody="${response%???}"
 
     if [[ $httpStatusCode -ne 200 ]]; then
-        echo "./get-location.sh -> Error: Failed to fetch location (HTTP status code $httpStatusCode)" >&2
+        echo "Error: Failed to fetch location (HTTP status code $httpStatusCode)" >&2
         return 1
     fi
 

@@ -24,13 +24,21 @@ getWeather() {
     latitude="$(jq -r '.lat' <<<"${locationInfo}")"
     longitude="$(jq -r '.lon' <<<"${locationInfo}")"
 
+    local hourlyForecast
+    local multiDayForecast
+    local location
+
+    location="$(jq -r '.name' <<<"$locationInfo")"
+    hourlyForecast=$(getWeatherForecast --hourly "$location")
+    multiDayForecast=$(getWeatherForecast --multidays "$location")
+
     local url
     local response
 
     url="https://api.openweathermap.org/data/2.5/weather?lat={$latitude}&lon={$longitude}&units=metric&appid={$OPENWEATHER_APIKEY}"
     response=$(curl -s "${url}" | jq .)
-    formatData "$response" "$locationInfo"
 
+    formatData "$response" "$locationInfo" "$hourlyForecast" "$multiDayForecast"
 }
 
 getWeatherByCoordinates() {
@@ -167,6 +175,9 @@ main() {
 
     # Includes -> getFlagEmoji(), getCountryName(), getWeatherIcon(), getDirectionEmoji()
     source weather-utils.sh
+
+    # Includes ->
+    source weather-forecast.sh
 
     # Includes -> formatInfo()
     source format-data.sh
