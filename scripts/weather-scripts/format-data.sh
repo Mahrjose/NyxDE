@@ -34,7 +34,7 @@ formatData() {
     flag=$(getFlagEmoji "$(jq -r '.sys.country' <<<"$json")")
 
     # ---------------------------------------------------------------------- #
-    #         Extract and format temperature and weather description        #
+    #         Extract and format temperature and weather description         #
     # ---------------------------------------------------------------------- #
 
     local temperature
@@ -50,7 +50,7 @@ formatData() {
     tempMax=$(printf "%.1f" "$(jq -r '.temp_max' <<<"$hourlyForecast")")
 
     # ---------------------------------------------------------------------- #
-    #  Extract and format wind data (speed, direction, gusts) and humidity  #
+    #  Extract and format wind data (speed, direction, gusts) and humidity   #
     # ---------------------------------------------------------------------- #
 
     local humidity
@@ -63,7 +63,7 @@ formatData() {
     windGusts=$(jq -r '.wind.gust // 0' <<<"$json")
 
     # ---------------------------------------------------------------------------------- #
-    # Extract and format additional weather details (pressure, cloud cover, visibility) #
+    # Extract and format additional weather details (pressure, cloud cover, visibility)  #
     # ---------------------------------------------------------------------------------- #
 
     local pressure
@@ -106,29 +106,41 @@ formatData() {
     #                Prepare the daily forecast for the tooltip              #
     # ---------------------------------------------------------------------- #
 
-    local dailyForecast=""
+    local dailyForecast
     local timeSlots=("00:00:00" "06:00:00" "12:00:00" "18:00:00")
     for timeSlot in "${timeSlots[@]}"; do
         local temp
         local desc
+        local time
+
         temp=$(jq -r --arg time "$timeSlot" '.hours[] | select(.time == $time) | .temp' <<<"$hourlyForecast")
         desc=$(jq -r --arg time "$timeSlot" '.hours[] | select(.time == $time) | .desription' <<<"$hourlyForecast")
-        dailyForecast+="\n🕒 ${timeSlot} - ${temp}°C | ${desc^}"
+
+        [ "$timeSlot" == "00:00:00" ] && time="12 AM"
+        [ "$timeSlot" == "06:00:00" ] && time="06 AM"
+        [ "$timeSlot" == "12:00:00" ] && time="12 PM"
+        [ "$timeSlot" == "18:00:00" ] && time="06 PM"
+
+        dailyForecast+=("🕒 ${time} - ${temp}°C | ${desc}")
     done
 
     # ---------------------------------------------------------------------- #
     #             Prepare the 4-day forecast for the tooltip                 #
     # ---------------------------------------------------------------------- #
 
-    local dayForecast=""
+    local dayForecast
+    local dayForecastDesc
     for i in {1..4}; do
         local date
         local temp
         local desc
-        date=$(jq -r ".days[$i].date" <<<"$multiDayForecast")
+
+        date=$(date -d "$(jq -r ".days[$i].date" <<<"$multiDayForecast")" +"%d %b")
         temp=$(jq -r ".days[$i].temp" <<<"$multiDayForecast")
         desc=$(jq -r ".days[$i].desription" <<<"$multiDayForecast")
-        dayForecast+="\n📅 ${date} - ${temp}°C | ${desc^}"
+
+        dayForecast+=("${date} - ${temp}°C")
+        dayForecastDesc+=("${desc^}")
     done
 
     # ---------------------------------------------------------------------- #
@@ -137,11 +149,17 @@ formatData() {
 
     local toolTip
     toolTip="\
+    \n\
     📍 Location: ${city}, $country $flag (${lat}, $lon)\n\
     \n\
     🌡️ Current Weather: ${temperature}°C | ${weatherDescription^}\n\
         🔥 Feels Like: ${feelsLike}°C\n\
         🔼 High: ${tempMax}°C, 🔽 Low: ${tempMin}°C\n\
+    \n\
+        ${dailyForecast[0]}\n\
+        ${dailyForecast[1]}\n\
+        ${dailyForecast[2]}\n\
+        ${dailyForecast[3]}\n\
     \n\
     📊 Additional Details:          \n\
         💧 Humidity   : ${humidity}%   \n\
@@ -153,13 +171,22 @@ formatData() {
     \n\
     🌅 Sunrise: $(date -d @$sunrise +'%I:%M %p') 🌄 | Sunset: $(date -d @$sunset +'%I:%M %p') 🌃    \n\
     \n\
-    📅 **Today's Forecast**: \n\
-    ${dailyForecast}\n\
+    ----------------------------------------------------------\n\
+    💁‍♀️ $message \n\
+    ----------------------------------------------------------\n\
     \n\
-    📅 **Next 4 Days**: \n\
-    ${dayForecast}\n\
-    \n\
-    $message \n\
+    📢 Weather Forecast: \n\
+        📅 ${dayForecast[0]}\n\
+        -> ${dayForecastDesc[0]}\n\
+        \n\
+        📅 ${dayForecast[1]}\n\
+        -> ${dayForecastDesc[1]}\n\
+        \n\
+        📅 ${dayForecast[2]}\n\
+        -> ${dayForecastDesc[2]}\n\
+        \n\
+        📅 ${dayForecast[3]}\n\
+        -> ${dayForecastDesc[3]}\n\
     "
 
     # Return the final JSON string with formatted text and tooltip

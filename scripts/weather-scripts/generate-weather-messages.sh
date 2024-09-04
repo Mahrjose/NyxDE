@@ -163,5 +163,5 @@ generateDynamicMessage() {
 
     message=$newMessage
 
-    echo "📝 $message"
+    echo "$message"
 }
