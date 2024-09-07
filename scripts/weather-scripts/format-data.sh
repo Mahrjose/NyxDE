@@ -16,6 +16,7 @@ formatData() {
     local locationInfo="$2"     # Json data, includes city, lat, lon, country, state
     local hourlyForecast="$3"   # Hourly forecast JSON data
     local multiDayForecast="$4" # Multi-day forecast JSON data
+    local currentTime="$5"
 
     # --------------------------------------------------------------------- #
     # Extract and format location data (latitude, longitude, city, country) #
@@ -150,16 +151,16 @@ formatData() {
     local toolTip
     toolTip="\
     \n\
-    📍 Location: ${city}, $country $flag (${lat}, $lon)\n\
+    📍 Location: ${city}, $country $flag (${lat}, $lon) \n\
     \n\
-    🌡️ Current Weather: ${temperature}°C | ${weatherDescription^}\n\
-        🔥 Feels Like: ${feelsLike}°C\n\
-        🔼 High: ${tempMax}°C, 🔽 Low: ${tempMin}°C\n\
+    🌡️ Current Weather: ${temperature}°C | ${weatherDescription^}  \n\
+        🔥 Feels Like: ${feelsLike}°C   \n\
+        🔼 High: ${tempMax}°C, 🔽 Low: ${tempMin}°C \n\
     \n\
-        ${dailyForecast[0]}\n\
-        ${dailyForecast[1]}\n\
-        ${dailyForecast[2]}\n\
-        ${dailyForecast[3]}\n\
+        ${dailyForecast[0]} \n\
+        ${dailyForecast[1]} \n\
+        ${dailyForecast[2]} \n\
+        ${dailyForecast[3]} \n\
     \n\
     📊 Additional Details:          \n\
         💧 Humidity   : ${humidity}%   \n\
@@ -172,21 +173,24 @@ formatData() {
     🌅 Sunrise: $(date -d @$sunrise +'%I:%M %p') 🌄 | Sunset: $(date -d @$sunset +'%I:%M %p') 🌃    \n\
     \n\
     ----------------------------------------------------------\n\
-    💁‍♀️ $message \n\
+    💁‍♀️ $message     \n\
     ----------------------------------------------------------\n\
     \n\
-    📢 Weather Forecast: \n\
-        📅 ${dayForecast[0]}\n\
-        -> ${dayForecastDesc[0]}\n\
+    📢 Weather Forecast:    \n\
+        📅 ${dayForecast[0]}    \n\
+        -> ${dayForecastDesc[0]}    \n\
         \n\
-        📅 ${dayForecast[1]}\n\
-        -> ${dayForecastDesc[1]}\n\
+        📅 ${dayForecast[1]}    \n\
+        -> ${dayForecastDesc[1]}    \n\
         \n\
-        📅 ${dayForecast[2]}\n\
-        -> ${dayForecastDesc[2]}\n\
+        📅 ${dayForecast[2]}    \n\
+        -> ${dayForecastDesc[2]}    \n\
         \n\
-        📅 ${dayForecast[3]}\n\
-        -> ${dayForecastDesc[3]}\n\
+        📅 ${dayForecast[3]}    \n\
+        -> ${dayForecastDesc[3]}    \n\
+    \n\
+    🕒 Last Updated: ${currentTime} \n\
+    \n\
     "
 
     # Return the final JSON string with formatted text and tooltip

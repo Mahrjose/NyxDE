@@ -14,6 +14,9 @@ getWeather() {
     local locationInfo
     local latitude
     local longitude
+    local currentTime
+
+    currentTime=$(date +"%I:%M %p")
 
     if [ "$1" == "--city" ]; then
         locationInfo="$(getLocation --by-city "$@")"
@@ -38,7 +41,7 @@ getWeather() {
     url="https://api.openweathermap.org/data/2.5/weather?lat={$latitude}&lon={$longitude}&units=metric&appid={$OPENWEATHER_APIKEY}"
     response=$(curl -s "${url}" | jq .)
 
-    formatData "$response" "$locationInfo" "$hourlyForecast" "$multiDayForecast"
+    formatData "$response" "$locationInfo" "$hourlyForecast" "$multiDayForecast" "$currentTime"
 }
 
 getWeatherByCoordinates() {
