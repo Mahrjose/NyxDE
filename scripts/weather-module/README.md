@@ -6,12 +6,13 @@ This weather module is a set of shell scripts designed to fetch and display weat
 1. [Features](#features)
 2. [Setup](#setup)
 3. [Dependencies](#dependencies)
-4. [Usage](#usage)
+    - [Install Required Dependencies](#install-required-dependencies)
+4. [Scripts](#scripts)
+5. [Usage](#usage)
     - [Hourly Weather Forecast](#hourly-weather-forecast)
     - [Multi-Day Weather Forecast](#multi-day-weather-forecast)
     - [Icons and Emojis](#icons-and-emojis)
     - [Dynamic Messages](#dynamic-messages)
-5. [Scripts](#scripts)
 6. [Configuration](#configuration)
 
 ## Features
@@ -30,21 +31,7 @@ This weather module is a set of shell scripts designed to fetch and display weat
    git clone https://github.com/mahrjose/nyxdots.git
    cd scripts/weather-module
    ```
-   
-2. **Install Required Dependencies**:
-   This module depends on utilities like `curl`, `jq`, and `bc` for fetching and processing data. Install them as follows:
-
-   - On Debian/Ubuntu-based systems:
-     ```bash
-     sudo apt-get install curl jq bc
-     ```
-
-   - On Arch-based systems:
-     ```bash
-     sudo pacman -S curl jq bc
-     ```
-
-3. **API Keys**:
+2. **API Keys**:
    - Obtain API keys from:
      - [Visual Crossing Weather API](https://www.visualcrossing.com/)
      - [OpenWeatherMap Geo API](https://openweathermap.org/api/geocoding-api)
@@ -62,6 +49,60 @@ This module requires the following dependencies to be installed:
 - `curl` - Used for making API requests.
 - `jq` - Used for parsing JSON responses.
 - `bc` - Used for floating-point arithmetic in the shell scripts.
+
+### Install Required Dependencies
+This module depends on utilities like `curl`, `jq`, and `bc` for fetching and processing data. Install them as follows:
+
+- On Debian/Ubuntu-based systems:
+    ```bash
+    sudo apt-get install curl jq bc
+    ```
+
+- On Arch-based systems:
+    ```bash
+    sudo pacman -S curl jq bc
+    ```
+
+## Scripts
+
+- **`run.sh`**: Main entry point for fetching weather data.
+  - **Description**: Gathers and displays weather data from various APIs.
+  - **Usage**:
+    ```bash
+    ./run.sh [options]
+    ```
+  - **Options**:
+    - `--current`: Fetch current weather conditions.
+    - `--hourly`: Fetch hourly forecast.
+    - `--daily`: Fetch multi-day forecast.
+
+- **`weather-forecast.sh`**: Handles fetching weather forecasts (hourly and multi-day).
+  - **Functions**:
+    - `hourlyWeatherForecast`: Fetches and parses hourly weather data.
+    - `multiDayWeatherForecast`: Fetches multi-day forecasts.
+    - `getWeatherForecast`: Wrapper function to call either `hourly` or `multiday` forecasts.
+
+- **`weather-utils.sh`**: Contains utility functions for handling weather-related data.
+  - **Functions**:
+    - `getWeatherIcon`: Maps weather codes to corresponding emoji icons.
+    - `getCountryName`: Retrieves the full country name from a JSON file using ISO codes.
+    - `getFlagEmoji`: Retrieves the flag emoji from the ISO country code.
+    - `getDirectionEmoji`: Converts wind degrees into directional emojis.
+
+- **`get-location.sh`**: Fetches location data based on city/state/country or latitude/longitude coordinates.
+  - **Usage**:
+    ```bash
+    ./get-location.sh --by-city --city <city-name> [--state <state>] [--country <country>]
+    ./get-location.sh --by-coordinates --lat <latitude> --lon <longitude>
+    ```
+
+- **`generate-weather-messages.sh`**: Generates weather advisories based on "feels-like" temperature and weather conditions.
+  - **Usage**:
+    ```bash
+    ./generate-weather-messages.sh generateDynamicMessage <feels-like-temperature> <weather-id>
+    ```
+
+- **`config.env`**: Contains environment variables such as API keys.
 
 ## Usage
 
@@ -112,49 +153,6 @@ Generate contextual messages based on temperature and weather conditions:
 ```bash
 ./generate-weather-messages.sh generateDynamicMessage 30 500 # returns "Hot weather. Suitable for indoor activities. Light rain..."
 ```
-
-## Scripts
-
-- **`run.sh`**: Main entry point for fetching weather data.
-  - **Description**: Gathers and displays weather data from various APIs.
-  - **Usage**:
-    ```bash
-    ./run.sh [options]
-    ```
-  - **Options**:
-    - `--current`: Fetch current weather conditions.
-    - `--hourly`: Fetch hourly forecast.
-    - `--daily`: Fetch multi-day forecast.
-
-- **`weather-forecast.sh`**: Handles fetching weather forecasts (hourly and multi-day).
-  - **Functions**:
-    - `hourlyWeatherForecast`: Fetches and parses hourly weather data.
-    - `multiDayWeatherForecast`: Fetches multi-day forecasts.
-    - `getWeatherForecast`: Wrapper function to call either `hourly` or `multiday` forecasts.
-
-- **`weather-utils.sh`**: Contains utility functions for handling weather-related data.
-  - **Functions**:
-    - `getWeatherIcon`: Maps weather codes to corresponding emoji icons.
-    - `getCountryName`: Retrieves the full country name from a JSON file using ISO codes.
-    - `getFlagEmoji`: Retrieves the flag emoji from the ISO country code.
-    - `getDirectionEmoji`: Converts wind degrees into directional emojis.
-
-- **`get-location.sh`**: Fetches location data based on city/state/country or latitude/longitude coordinates.
-  - **Usage**:
-    ```bash
-    ./get-location.sh --by-city --city <city-name> [--state <state>] [--country <country>]
-    ./get-location.sh --by-coordinates --lat <latitude> --lon <longitude>
-    ```
-
-- **`generate-weather-messages.sh`**: Generates weather advisories based on "feels-like" temperature and weather conditions.
-  - **Usage**:
-    ```bash
-    ./generate-weather-messages.sh generateDynamicMessage <feels-like-temperature> <weather-id>
-    ```
-
-- **`config.env`**: Contains environment variables such as API keys.
-
-
 ## Configuration
 
 To customize the script for your use case, modify the following environment variables and script parameters:
