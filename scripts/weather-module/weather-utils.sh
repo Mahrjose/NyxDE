@@ -2,11 +2,12 @@
 
 getWeatherIcon() {
 
-    # getWeatherIcon: Returns the appropriate emoji for a given weather icon code.
+    # getWeatherIcon: Returns an emoji representation of the current weather based on the provided icon code.
+    # The icon code is typically provided by weather APIs.
     # Arguments:
-    #   iconCode: The weather icon code (required)
+    #   iconCode: The weather icon code (required), usually a string like "01d", "02n", etc.
     # Returns:
-    #   A string containing the corresponding weather emoji.
+    #   A string containing the corresponding weather emoji based on the icon code.
 
     local iconCode="$1"
 
@@ -28,11 +29,12 @@ getWeatherIcon() {
 
 getCountryName() {
 
-    # getCountryName: Fetches the country name from the local JSON file based on the country code.
+    # getCountryName: Retrieves the country name corresponding to the provided ISO country code.
+    # Looks up a local JSON file for the mapping of country codes to names.
     # Arguments:
-    #   countryCode: The ISO 3166-1 alpha-2 country code (required)
+    #   countryCode: The ISO 3166-1 alpha-2 country code (required), such as "US", "GB", etc.
     # Returns:
-    #   A string containing the corresponding country name.
+    #   A string containing the full country name corresponding to the given code.
 
     local countryName
     local countryCode="$1"
@@ -44,11 +46,12 @@ getCountryName() {
 
 getFlagEmoji() {
 
-    # getFlagEmoji: Retrieves the emoji flag corresponding to a country code from the local JSON file.
+    # getFlagEmoji: Returns the flag emoji corresponding to a given country code.
+    # It looks up the country code in a local JSON file to find the associated flag emoji.
     # Arguments:
-    #   countryCode: The ISO 3166-1 alpha-2 country code (required)
+    #   countryCode: The ISO 3166-1 alpha-2 country code (required), such as "US", "FR", etc.
     # Returns:
-    #   A string containing the corresponding flag emoji.
+    #   A string containing the flag emoji for the corresponding country.
 
     local flag
     local countryCode="$1"
@@ -60,11 +63,12 @@ getFlagEmoji() {
 
 getDirectionEmoji() {
 
-    # getDirectionEmoji: Converts a degree value to a corresponding directional emoji.
+    # getDirectionEmoji: Converts a wind degree value into the corresponding directional emoji.
+    # The degree represents the direction of the wind (0°-360°), which is then mapped to directional emojis.
     # Arguments:
-    #   degree: The degree of the direction (0-360) (required)
+    #   degree: The wind direction degree (required), a number between 0 and 360.
     # Returns:
-    #   A string containing the corresponding directional emoji.
+    #   A string containing the directional emoji corresponding to the given degree.
 
     local degree="$1"
     local emoji

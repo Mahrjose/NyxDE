@@ -9,6 +9,7 @@ formatData() {
     #   locationInfo      : JSON data containing location information (required)
     #   hourlyForecast    : JSON data containing hourly forecast      (required)
     #   multiDayForecast  : JSON data containing multi-day forecast   (required)
+    #   currentTime       : String containing time of the execution   (required)
     # Returns:
     #   JSON string with formatted weather text and tooltip for display.
 
@@ -16,7 +17,7 @@ formatData() {
     local locationInfo="$2"     # Json data, includes city, lat, lon, country, state
     local hourlyForecast="$3"   # Hourly forecast JSON data
     local multiDayForecast="$4" # Multi-day forecast JSON data
-    local currentTime="$5"
+    local currentTime="$5"      # string containing the exact time script executed
 
     # --------------------------------------------------------------------- #
     # Extract and format location data (latitude, longitude, city, country) #

@@ -2,12 +2,11 @@
 
 getWeather() {
 
-    # getWeather: Fetches weather data based on location information.
-    # Determines whether to use city or coordinates for location,
-    # builds the API request URL, and formats the weather data.
+    # getWeather: Fetches weather data for a location using city information or coordinates.
+    # It determines the location type, constructs an API request, and formats the weather data.
     # Arguments:
-    #   Either a set of location parameters (--city, --state, --country)
-    #   or coordinates (--lat, --lon).
+    #   --city, --state, --country : Location parameters for city/state/country.
+    #   --lat, --lon               : Geographic coordinates (latitude/longitude).
     # Returns:
     #   None
 
@@ -46,11 +45,12 @@ getWeather() {
 
 getWeatherByCoordinates() {
 
-    # getWeatherByCoordinates: Parses command-line arguments for latitude and longitude
-    # and fetches weather data for the specified coordinates.
+    # getWeatherByCoordinates: Fetches weather data using geographic coordinates.
+    # Parses latitude and longitude from the command-line arguments and retrieves the weather.
+    # Defaults to a specific location if coordinates are not provided.
     # Arguments:
-    #   --lat     : Latitude coordinate (optional, defaults to 23.543)
-    #   --lon     : Longitude coordinate (optional, defaults to 89.626)
+    #   --lat : Latitude value  (required, defaults to 23.543).
+    #   --lon : Longitude value (required, defaults to 89.626).
     # Returns:
     #   None
 
@@ -90,12 +90,12 @@ getWeatherByCoordinates() {
 
 getWeatherByCity() {
 
-    # getWeatherByCity: Parses command-line arguments for city, state, and country
-    # and fetches weather data for the specified city.
+    # getWeatherByCity: Fetches weather data using city, state, and country information.
+    # Parses the city, state, and country from command-line arguments. Defaults to Madhukhali, Bangladesh if not provided.
     # Arguments:
-    #   --city    : Name of the city (required, defaults to Dhaka if not provided)
-    #   --state   : Name of the state (optional)
-    #   --country : Name of the country (optional, defaults to Bangladesh if not provided)
+    #   --city    : Name of the city    (required, defaults to Madhukhali).
+    #   --state   : Name of the state   (optional, defaults to Null).
+    #   --country : Name of the country (optional, defaults to Bangladesh).
     # Returns:
     #   None
 
@@ -132,8 +132,8 @@ getWeatherByCity() {
 
     # Set default values if not provided
     if [ -z "$city" ]; then
-        echo "Warning: --city is required and not given. Defaulting to --city Dhaka --country Bangladesh" >&2
-        city="Dhaka"
+        echo "Warning: --city is required and not given. Defaulting to --city Madhukhali --country Bangladesh" >&2
+        city="Madhukhali"
         country="Bangladesh"
     fi
 
@@ -144,19 +144,17 @@ getWeatherByCity() {
 
 main() {
 
-    # main: Entry point of the script to fetch weather information.
-    # Loads the API key, sets default values, parses arguments, and fetches weather data.
-    # Arguments (mutually exclusive groups):
-    #   Group 1: Location by city
-    #     --city    : Name of the city    (required, defaults to Dhaka if not provided)
-    #     --state   : Name of the state   (optional)
-    #     --country : Name of the country (optional, defaults to Bangladesh if not provided)
-    #
+    # main: The main entry point of the script.
+    # Loads the API key, processes user input, and calls appropriate functions to fetch
+    # weather data based on city/state/country or coordinates.
+    # Arguments:
+    #   Group 1: Location by city/state/country
+    #     --city    : Name of the city    (required, defaults to Madhukhali).
+    #     --state   : Name of the state   (optional, defaults to Null).
+    #     --country : Name of the country (optional, defaults to Bangladesh).
     #   Group 2: Location by coordinates
-    #     --lat     : Latitude coordinate  (required, defaults to 23.543 if not provided)
-    #     --lon     : Longitude coordinate (required, defaults to 89.626 if not provided)
-    #
-    # Note: Only one group of arguments can be used at a time.
+    #     --lat     : Latitude coordinate  (required, defaults to 23.543).
+    #     --lon     : Longitude coordinate (required, defaults to 89.626).
     # Returns:
     #   None
 
@@ -179,7 +177,7 @@ main() {
     # Includes -> getFlagEmoji(), getCountryName(), getWeatherIcon(), getDirectionEmoji()
     source weather-utils.sh
 
-    # Includes ->
+    # Includes -> hourlyWeatherForecast(), multiDayWeatherForecast(), getWeatherForecast()
     source weather-forecast.sh
 
     # Includes -> formatInfo()

@@ -2,17 +2,23 @@
 
 getLocation() {
 
-    # getLocation: Fetches location data based on city/state/country or coordinates.
+    # getLocation: Fetches geographical location data based on either city/state/country information or latitude/longitude coordinates.
+    #
     # Arguments:
-    #   --by-city     : Use city/state/country to get location data
-    #     --city      : Name of the city
-    #     --state     : Name of the state (optional)
-    #     --country   : Name of the country (optional)
-    #   --by-coordinates : Use latitude/longitude to get location data
-    #     --lat       : Latitude coordinate
-    #     --lon       : Longitude coordinate
+    #   --by-city        : Use city/state/country to retrieve location data.
+    #     --city         : Name of the city (required when using --by-city).
+    #     --state        : Name of the state (optional).
+    #     --country      : Name of the country (optional).
+    #   --by-coordinates : Use latitude/longitude to retrieve location data.
+    #     --lat          : Latitude coordinate (required when using --by-coordinates).
+    #     --lon          : Longitude coordinate (required when using --by-coordinates).
+    #
     # Returns:
-    #   JSON object containing location data including name, latitude, longitude, state, and country.
+    #   A JSON object containing location data, including the name, latitude, longitude, state (if available), and country.
+    #
+    # Notes:
+    #   The function makes a request to the OpenWeatherMap API to retrieve the location data based on the provided arguments.
+    #   If an invalid or unsupported argument is provided, it returns an error message.
 
     if [ "$1" == "--by-city" ]; then
 

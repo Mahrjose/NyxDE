@@ -2,6 +2,13 @@
 
 hourlyWeatherForecast() {
 
+    # hourlyWeatherForecast: Fetches and returns the hourly weather forecast for a specific location.
+    # It retrieves the forecast for the current day, including temperature, max/min temp, and conditions for each hour.
+    # Arguments:
+    #   location : The location for which the weather forecast is to be fetched (required).
+    # Returns:
+    #   A formatted JSON object containing the hourly weather data.
+
     local location=$1
     local forecast
     local url
@@ -30,6 +37,14 @@ hourlyWeatherForecast() {
 }
 
 multiDayWeatherForecast() {
+
+    # multiDayWeatherForecast: Fetches and returns a multi-day weather forecast for a specific location.
+    # It retrieves the forecast for the next few days, including daily temperature, max/min temp, and conditions for each day.
+    # Arguments:
+    #   location : The location for which the weather forecast is to be fetched (required).
+    #   days     : The number of days for which the forecast is needed (default is 4 days).
+    # Returns:
+    #   A formatted JSON object containing the multi-day weather data.
 
     local location=$1
     local days=4
@@ -62,9 +77,14 @@ multiDayWeatherForecast() {
 
 getWeatherForecast() {
 
-    #! TODO -> Implement --hourdiff & --dayscount options
+    # getWeatherForecast: Determines the type of weather forecast (hourly or multi-day) based on the argument provided.
+    # Arguments:
+    #   --hourly    : Fetches the hourly weather forecast for a given location.
+    #   --multidays : Fetches the multi-day weather forecast for a given location.
+    # Returns:
+    #   None
 
-    # source ../../.env
+    #! TODO -> Implement --hourdiff & --dayscount options
 
     case "$1" in
     --hourly)
