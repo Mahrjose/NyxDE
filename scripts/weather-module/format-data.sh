@@ -190,7 +190,6 @@ formatData() {
         -> ${dayForecastDesc[3]}    \n\
     \n\
     🕒 Last Updated: ${currentTime} \n\
-    \n\
     "
 
     # Return the final JSON string with formatted text and tooltip
