@@ -29,7 +29,7 @@ This weather module is a set of shell scripts designed to fetch and display weat
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/mahrjose/nyxdots.git
-   cd scripts/weather-module
+   cd nyxdots/scripts/weather-module
    ```
 2. **API Keys**:
    - Obtain API keys from:
